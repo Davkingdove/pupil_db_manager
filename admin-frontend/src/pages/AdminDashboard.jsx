@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import Chart from 'chart.js/auto';
 
@@ -18,6 +18,9 @@ export default function AdminDashboard() {
   const [summary, setSummary] = useState({});
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [search, setSearch] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const debounceRef = useRef();
 
   useEffect(() => {
     fetchStudents();
@@ -29,6 +32,19 @@ export default function AdminDashboard() {
     setStudents(res.data.students);
     setTotalPages(res.data.totalPages);
   }
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      if (!search.trim()) {
+        setSearchResults([]);
+        return;
+      }
+      const res = await axios.get('/api/students', { params: { name: search } });
+      setSearchResults(res.data.students);
+    }, 300);
+    return () => clearTimeout(debounceRef.current);
+  }, [search]);
 
   async function fetchSummary() {
     const res = await axios.get('/api/summary');
@@ -54,6 +70,20 @@ export default function AdminDashboard() {
   return (
     <div>
       <h2>Admin Dashboard</h2>
+      <div>
+        <input
+          type="text"
+          placeholder="Search by name..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          style={{ padding: '0.5rem', marginRight: '0.5rem' }}
+        />
+      </div>
+      <div className="student-list">
+        {(search.trim() ? searchResults : students).map(s => (
+          <StudentCard key={s.id} student={s} onClick={setSelected} />
+        ))}
+      </div>
       <div>
         <select onChange={e => setFilters(f => ({ ...f, year: e.target.value }))}>
           <option value="">All Years</option>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
-import axios from 'axios';
 import Chart from 'chart.js/auto';
+import axios from 'axios';
 
 function StudentCard({ student, onClick }) {
   return (
@@ -21,6 +21,7 @@ export default function AdminDashboard() {
   const [search, setSearch] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const debounceRef = useRef();
+  const chartRef = useRef();
 
   useEffect(() => {
     fetchStudents();
@@ -49,42 +50,68 @@ export default function AdminDashboard() {
   async function fetchSummary() {
     const res = await axios.get('/api/summary');
     setSummary(res.data);
-    setTimeout(() => renderChart(res.data), 100);
   }
 
-  function renderChart(data) {
+  useEffect(() => {
+    if (!summary || Object.keys(summary).length === 0) return;
     const ctx = document.getElementById('summaryChart');
     if (!ctx) return;
-    new Chart(ctx, {
+    if (chartRef.current) {
+      chartRef.current.destroy();
+    }
+    chartRef.current = new Chart(ctx, {
       type: 'bar',
       data: {
-        labels: Object.keys(data),
+        labels: Object.keys(summary),
         datasets: [{
           label: 'Students by Programme',
-          data: Object.values(data),
+          data: Object.values(summary),
+          backgroundColor: [
+            '#007bff', '#28a745', '#ffc107', '#dc3545', '#6f42c1'
+          ]
         }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          title: { display: true, text: 'Students by Programme' }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              stepSize: 1,
+              callback: function(value) {
+                return Number.isInteger(value) ? value : '';
+              }
+            }
+          }
+        }
       }
     });
-  }
+    // Cleanup chart on unmount
+    return () => {
+      if (chartRef.current) chartRef.current.destroy();
+    };
+  }, [summary]);
 
   return (
-    <div>
+    <div className="dashboard-container">
       <h2>Admin Dashboard</h2>
-      <div>
+      <div className="summary-chart-section">
+        <h3>Summary: Students by Programme</h3>
+        <canvas id="summaryChart" width="400" height="200"></canvas>
+      </div>
+      <div className="search-bar">
         <input
           type="text"
           placeholder="Search by name..."
           value={search}
           onChange={e => setSearch(e.target.value)}
-          style={{ padding: '0.5rem', marginRight: '0.5rem' }}
         />
       </div>
-      <div className="student-list">
-        {(search.trim() ? searchResults : students).map(s => (
-          <StudentCard key={s.id} student={s} onClick={setSelected} />
-        ))}
-      </div>
-      <div>
+      <div className="filters">
         <select onChange={e => setFilters(f => ({ ...f, year: e.target.value }))}>
           <option value="">All Years</option>
           {[...Array(4)].map((_, i) => {
@@ -98,26 +125,28 @@ export default function AdminDashboard() {
         </select>
       </div>
       <div className="student-list">
-        {students.map(s => <StudentCard key={s.id} student={s} onClick={setSelected} />)}
+        {(search.trim() ? searchResults : students).map(s => (
+          <StudentCard key={s.id} student={s} onClick={setSelected} />
+        ))}
       </div>
-      <div>
+      <div className="pagination">
         <button disabled={page === 1} onClick={() => setPage(p => p - 1)}>Prev</button>
         <span>Page {page} of {totalPages}</span>
         <button disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>Next</button>
       </div>
-      <canvas id="summaryChart" width="400" height="200"></canvas>
       {selected && (
-        <div className="modal">
-          <h3>{selected.firstName} {selected.surname}</h3>
-          <p>Programme: {selected.programme}</p>
-          <p>Year of Admission: {selected.yearOfAdmission}</p>
-          <p>Previous School: {selected.previousSchool}</p>
-          <p>BECE Aggregate: {selected.beceAggregate}</p>
-          <p>Mother: {selected.motherName} ({selected.motherContact})</p>
-          <p>Father: {selected.fatherName} ({selected.fatherContact})</p>
-          <button onClick={() => setSelected(null)}>Close</button>
+        <div className="modal-overlay">
+          <div className="modal">
+            <h3>{selected.firstName} {selected.surname}</h3>
+            <p>Programme: {selected.programme}</p>
+            <p>Year of Admission: {selected.yearOfAdmission}</p>
+            <p>Previous School: {selected.previousSchool}</p>
+            <p>BECE Aggregate: {selected.beceAggregate}</p>
+            <p>Mother: {selected.motherName} ({selected.motherContact})</p>
+            <p>Father: {selected.fatherName} ({selected.fatherContact})</p>
+            <button onClick={() => setSelected(null)}>Close</button>
+          </div>
         </div>
       )}
     </div>
-  );
-}
+  )}

@@ -1,0 +1,92 @@
+ @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+body {
+  font-family: 'Inter', sans-serif;
+}
+.formbold-main-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+}
+
+.formbold-form-wrapper {
+  margin: 0 auto;
+  max-width: 570px;
+  width: 100%;
+  background: white;
+  padding: 40px;
+}
+
+input {
+    width: 100%;
+    padding: 13px 22px;
+    border-radius: 5px;
+    border: 1px solid #dde3ec;
+    background: #ffffff;
+    font-weight: 500;
+    font-size: 16px;
+    color: #07074d;
+    outline: none;
+    resize: none;
+}
+
+input:focus {
+    border-color: #4CAF50;
+    outline: none;
+}
+
+
+.formbold-input-group {
+  margin-bottom: 18px;
+}
+
+.formbold-form-select {
+  width: 100%;
+  padding: 12px 22px;
+  border-radius: 5px;
+  border: 1px solid #dde3ec;
+  background: #ffffff;
+  font-size: 16px;
+  color: #536387;
+  outline: none;
+  resize: none;
+}
+
+div.ptitle,div.gtitle,div.resultsSegment{
+    text-align: center;
+    font-size: larger;
+    font-weight: bold;
+}
+label{
+  text-align: center;  
+}
+.formbold-btn {
+  text-align: center;
+  width: 100%;
+  font-size: 16px;
+  border-radius: 5px;
+  padding: 14px 25px;
+  border: none;
+  font-weight: 500;
+  background-color: #6a64f1;
+  color: white;
+  cursor: pointer;
+  margin-top: 25px;
+}
+
+/* align images by each input form*/
+.form-group {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+}
+.form-group img {
+  width: 35px;
+  height: 30px;
+  margin-right: 10px;
+}

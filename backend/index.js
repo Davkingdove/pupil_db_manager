@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const multer = require('multer');
@@ -103,7 +104,19 @@ app.get('/api/students', async (req, res) => {
 });
 
 app.get('/api/summary', async (req, res) => {
-  // ...summary chart data logic...
+ try {
+    // Get count of students by programme for all years
+    const { Student } = require('./models');
+    const programmes = ['Science', 'General Arts', 'Visual Arts', 'Business', 'Home Economics'];
+    const summary = {};
+    for (const prog of programmes) {
+      const count = await Student.count({ where: { programme: prog } });
+      summary[prog] = count;
+    }
+    res.json(summary);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 const PORT = process.env.PORT || 5000;

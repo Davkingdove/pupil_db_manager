@@ -1,7 +1,10 @@
 const { Sequelize, DataTypes } = require('sequelize');
 const sequelize = new Sequelize('pupil_db', 'root', 'root', {
   host: 'localhost',
-  dialect: 'mysql',
+  production: {
+    use_env_variable:'mysql://rll6jyttsifrn4bw:q909hllqxt6vahg3@aqx5w9yc5brambgl.cbetxkdyhwsb.us-east-1.rds.amazonaws.com:3306/uo5f6pj42eij4jgu',  // Sequelize auto-parses the connection string
+    dialect: 'mysql',
+  },
 });
 
 const Student = sequelize.define('Student', {

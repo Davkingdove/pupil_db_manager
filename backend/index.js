@@ -8,6 +8,17 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Serve static frontend (after API routes)
+const path = require('path');
+const frontendPath = path.join(__dirname, 'dist');
+app.use(express.static(frontendPath));
+
+// Catch-all: serve index.html for any non-API route
+app.get('*', (req, res) => {
+  if (req.path.startsWith('/api/')) return res.status(404).json({ error: 'Not found' });
+  res.sendFile(path.join(frontendPath, 'index.html'));
+});
+
 
 // Registration endpoint
 app.post('/api/register', async (req, res) => {

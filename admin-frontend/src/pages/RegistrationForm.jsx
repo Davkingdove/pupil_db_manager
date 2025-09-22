@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
 
 const currentYear = new Date().getFullYear();
 const years = [currentYear, currentYear - 1, currentYear - 2, currentYear - 3];
@@ -10,7 +9,7 @@ const aggregates = Array.from({ length: 35 }, (_, i) => (i + 6).toString().padSt
 export default function RegistrationForm() {
   const [form, setForm] = useState({});
   const [error, setError] = useState('');
-  const navigate = useNavigate();
+  const [success, setSuccess] = useState('');
 
   const handleChange = e => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -18,10 +17,21 @@ export default function RegistrationForm() {
 
   const handleSubmit = async e => {
     e.preventDefault();
+    setError('');
+    setSuccess('');
     try {
       const res = await axios.post('/api/register', form);
       if (res.data.success) {
-        navigate(`/upload/${res.data.student.id}`);
+        setSuccess('Registration successful!');
+        setForm({});
+        // Reset all form fields
+        Array.from(document.querySelectorAll('.styled-form input, .styled-form select')).forEach(input => {
+          if (input.type === 'date' || input.tagName === 'SELECT') {
+            input.value = '';
+          } else {
+            input.value = '';
+          }
+        });
       } else {
         setError(res.data.error);
       }
@@ -103,8 +113,9 @@ export default function RegistrationForm() {
             <input name="fatherContact" id="fatherContact" placeholder="Father's Contact" onChange={handleChange} />
           </div>
         </div>
-        <button className="form-btn" type="submit">Submit</button>
-        {error && <div className="form-error">{error}</div>}
+  <button className="form-btn" type="submit">Submit</button>
+  {success && <div className="form-success">{success}</div>}
+  {error && <div className="form-error">{error}</div>}
       </form>
     </div>
   );

@@ -1,7 +1,6 @@
-require('dotenv').config();
+//require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const multer = require('multer');
 const path = require('path');
 const { sequelize, Student } = require('./models');
 
@@ -9,24 +8,6 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Multer config for file upload
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/');
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + path.extname(file.originalname));
-  }
-});
-const upload = multer({
-  storage,
-  limits: { fileSize: 3 * 1024 * 1024 }, // 3MB
-  fileFilter: (req, file, cb) => {
-    const allowed = ['application/pdf', 'image/png', 'image/jpeg'];
-    if (allowed.includes(file.mimetype)) cb(null, true);
-    else cb(new Error('Invalid file type'));
-  }
-});
 
 // Registration endpoint
 app.post('/api/register', async (req, res) => {
@@ -38,18 +19,6 @@ app.post('/api/register', async (req, res) => {
   }
 });
 
-// File upload endpoint
-app.post('/api/upload/:studentId', upload.single('beceResult'), async (req, res) => {
-  try {
-    const student = await Student.findByPk(req.params.studentId);
-    if (!student) return res.status(404).json({ error: 'Student not found' });
-    student.beceResultFile = req.file.filename;
-    await student.save();
-    res.json({ success: true });
-  } catch (err) {
-    res.status(400).json({ success: false, error: err.message });
-  }
-});
 
 // Admin endpoints (list, filter, sort, pagination, summary)
 app.get('/api/students', async (req, res) => {
@@ -104,14 +73,17 @@ app.get('/api/students', async (req, res) => {
 });
 
 app.get('/api/summary', async (req, res) => {
- try {
-    // Get count of students by programme for all years
+  try {
+    // Get count of students by programme, optionally filtered by year
     const { Student } = require('./models');
     const programmes = ['Science', 'General Arts', 'Visual Arts', 'Business', 'Home Economics'];
     const summary = {};
+    const where = {};
+    if (req.query.year) {
+      where.yearOfAdmission = req.query.year;
+    }
     for (const prog of programmes) {
-      const count = await Student.count({ where: { programme: prog } });
-      summary[prog] = count;
+      summary[prog] = await Student.count({ where: { ...where, programme: prog } });
     }
     res.json(summary);
   } catch (err) {
@@ -119,7 +91,7 @@ app.get('/api/summary', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, async () => {
   await sequelize.sync();
   console.log(`Server running on port ${PORT}`);

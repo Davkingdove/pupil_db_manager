@@ -5,7 +5,7 @@ import axios from 'axios';
 function StudentCard({ student, onClick }) {
   return (
     <div className="student-card" onClick={() => onClick(student)}>
-      <h3>{student.firstName} {student.surname}</h3>
+      <h3>{student.firstName.toUpperCase()} {student.surname.toUpperCase()}</h3>
       <p>{student.programme}</p>
     </div>
   );
@@ -23,10 +23,14 @@ export default function AdminDashboard() {
   const debounceRef = useRef();
   const chartRef = useRef();
 
+
+
+
+  // Fetch students on any filter or page change
   useEffect(() => {
     fetchStudents();
-    fetchSummary();
   }, [filters, page]);
+
 
   async function fetchStudents() {
     const res = await axios.get('/api/students', { params: { ...filters, page } });
@@ -34,6 +38,17 @@ export default function AdminDashboard() {
     setTotalPages(res.data.totalPages);
   }
 
+
+  // Fetch summary/chart only when year filter changes
+  useEffect(() => {
+    async function fetchSummary() {
+      const params = {};
+      if (filters.year) params.year = filters.year;
+      const res = await axios.get('/api/summary', { params });
+      setSummary(res.data);
+    }
+    fetchSummary();
+  }, [filters.year]);
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
@@ -47,10 +62,7 @@ export default function AdminDashboard() {
     return () => clearTimeout(debounceRef.current);
   }, [search]);
 
-  async function fetchSummary() {
-    const res = await axios.get('/api/summary');
-    setSummary(res.data);
-  }
+
 
   useEffect(() => {
     if (!summary || Object.keys(summary).length === 0) return;
@@ -99,9 +111,9 @@ export default function AdminDashboard() {
   return (
     <div className="dashboard-container">
       <h2>Admin Dashboard</h2>
-      <div className="summary-chart-section">
-        <h3>Summary: Students by Programme</h3>
-        <canvas id="summaryChart" width="400" height="200"></canvas>
+      <div className="summary-chart-section" style={{ maxWidth: '350px', margin: '0 auto 2rem auto', padding: '1.2rem' }}>
+        <h3 style={{ fontSize: '1.1rem' }}>Summary: Students by Programme</h3>
+        <canvas id="summaryChart" width="300" height="140" style={{ display: 'block', margin: '0 auto' }}></canvas>
       </div>
       <div className="search-bar">
         <input
@@ -137,7 +149,7 @@ export default function AdminDashboard() {
       {selected && (
         <div className="modal-overlay">
           <div className="modal">
-            <h3>{selected.firstName} {selected.surname}</h3>
+            <h3>{selected.firstName.toUpperCase()} {selected.surname.toUpperCase()}</h3>
             <p>Programme: {selected.programme}</p>
             <p>Year of Admission: {selected.yearOfAdmission}</p>
             <p>Previous School: {selected.previousSchool}</p>

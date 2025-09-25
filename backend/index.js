@@ -1,22 +1,27 @@
 //require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
-const { sequelize, Student } = require('./models');
+const { sequelize, Student } = require('./models/models');
 
 const app = express();
 app.use(cors());
-app.use(express.json());
-
-// Serve static frontend (after API routes)
 const path = require('path');
-const frontendPath = path.join(__dirname, 'dist');
-app.use(express.static(frontendPath));
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')))
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, '/views'))
 
-// Catch-all: serve index.html for any non-API route
-app.get('*', (req, res) => {
-  if (req.path.startsWith('/api/')) return res.status(404).json({ error: 'Not found' });
-  res.sendFile(path.join(frontendPath, 'index.html'));
+app.get('/', (req, res) => {
+    res.render('registerPage')
+}) 
+
+app.post('/students', async(req,res)=>{
+    try {
+    const student = await Student.create(req.body);
+    res.status(201).json(" Saved Successfully ");
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 });
 
 
@@ -29,8 +34,6 @@ app.post('/api/register', async (req, res) => {
     res.status(400).json({ success: false, error: err.message });
   }
 });
-
-
 // Admin endpoints (list, filter, sort, pagination, summary)
 app.get('/api/students', async (req, res) => {
   // ...pagination, sorting, filtering logic...
@@ -43,18 +46,17 @@ app.get('/api/students', async (req, res) => {
       // Filtering
       const { Op } = require('sequelize');
       const where = {};
-      if (req.query.year) {
+      if (req.query.year && req.query.year !== '') {
         where.yearOfAdmission = req.query.year;
       }
-      if (req.query.programme) {
+      if (req.query.programme && req.query.programme !== '') {
         where.programme = req.query.programme;
       }
       if (req.query.name && req.query.name.trim()) {
         const search = `%${req.query.name.trim()}%`;
         where[Op.or] = [
           { firstName: { [Op.like]: search } },
-          { surname: { [Op.like]: search } },
-          { middleNames: { [Op.like]: search } }
+          { surname: { [Op.like]: search } }
         ];
       }
 
@@ -79,15 +81,16 @@ app.get('/api/students', async (req, res) => {
         page
       });
     } catch (err) {
+      console.error('Error in /api/students:', err);
       res.status(500).json({ error: err.message });
     }
 });
-
 app.get('/api/summary', async (req, res) => {
   try {
     // Get count of students by programme, optionally filtered by year
-    const { Student } = require('./models');
-    const programmes = ['Science', 'General Arts', 'Visual Arts', 'Business', 'Home Economics'];
+    const { Student } = require('./models/models');
+    // Use programme names that match your frontend and database
+    const programmes = ['General Science', 'General Arts', 'Visual Arts', 'Business', 'Home Economics'];
     const summary = {};
     const where = {};
     if (req.query.year) {
@@ -101,7 +104,6 @@ app.get('/api/summary', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, async () => {
   await sequelize.sync();

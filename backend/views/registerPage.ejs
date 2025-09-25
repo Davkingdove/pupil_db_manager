@@ -1,0 +1,168 @@
+
+  <%- include("partials/_header") %>
+  <div class="formbold-main-wrapper">
+    <div class="formbold-form-wrapper">
+      
+      <form action="/students" method="post" id="myForm"  >
+        
+        <div class="formbold-input-group">
+          <div class="ptitle"> Personal Details</div>
+          
+          <label for="firsname">First Name</label><br>
+          <div class="form-group">
+          <img src="./assets/images/firstname.png" alt="User">
+          <input type="text" id="firsname" class='formbold-form-input' name="firstName" placeholder="first Name" required><br>
+          </div>
+          
+            
+          <label for="lastname">Last Name</label><br>
+          <div class="form-group">
+            <img src="./assets/images/lastname.png" alt="User">
+           <input type="text" class='formbold-form-input' id="lastname" name="surname" placeholder="last Name" required><br>
+          </div >
+           <label for="dob"> Date of Birth</label><br>
+           <div class="form-group">
+           <img src="./assets/images/birth.png" alt="User">
+           <input id="dob" type="date" name="dateOfBirth" required="required"><br>
+          </div >
+         <label for="prejhs">  Previous JHS</label><br>
+         <div class="form-group">
+         <img src="./assets/images/school.png" alt="User">
+     <input id="prejhs" type="text" name="previousSchool"required="required"><br>
+    </div >
+     <label for="grade">  BECE Grade</label><br>
+     <div class="form-group">
+      <img src="./assets/images/becegrade.png" alt="User">
+      <select class="formbold-form-select" name="beceAggregate" id="grade" required="required">
+          <option value="--"></option>
+          <option value="06">06</option> <option value="07">07</option> <option value="08">08</option> <option value="09">09</option><option value="10">10</option>
+          <option value="11">11</option> <option value="12">12</option> <option value="13">13</option> <option value="14">14</option>
+          <option value="15">15</option> <option value="16">16</option> <option value="17">17</option> <option value="18">18</option>
+          <option value="19">19</option> <option value="20">20</option> <option value="21">21</option> <option value="22">22</option>
+          <option value="23">24</option> <option value="25">25</option> <option value="26">26</option> <option value="27">27</option>
+          <option value="28">28</option> <option value="29">29</option> <option value="30">30</option> <option value="31">31</option>
+           <option value="others">others</option>
+      </select>
+     </div>
+        <label for="yearOfAdmission">Year of Admission</label><br>
+        <div class="form-group">
+          <img src="./assets/images/birth.png" alt="Year">
+          <select class="formbold-form-select" name="yearOfAdmission" id="yearOfAdmission" required="required">
+            <!-- Options will be populated by JS -->
+          </select>
+        </div>
+        <label for="program">  Program Offered</label><br>
+        <div class="form-group">
+        <img src="./assets/images/course.png" alt="User">
+       <select class="formbold-form-select" name="programme" id="program" required="required">
+            <option> </option>
+    <option General Arts>General Arts</option><option value="General Science">General Science</option><option value="Business">Business</option><option Visaula Art>Visual Arts</option>
+    <option value="Home Economics">Home Economics</option><option value="others">Others</option>
+        </select><br>
+      </div >
+      </div>
+         <div class="parentDetail ">
+            <div class="gtitle"> Guardian Details</div>
+            <label for="mothername"> Mother's Full Name</label><br>
+            <div class="form-group">
+            <img src="./assets/images/person.png" alt="User">
+           <input id="mothername" name="motherName" type="text" > <br> 
+          </div >
+           <label for="contact">Mother's Phone Number</label><br>
+           <div class="form-group">
+           <img src="./assets/images/phone-call.png" alt="User">
+           <input id="contact" name="motherContact" type="tel" pattern="[0-9]{10}" maxlength="10" minlength="10" title="Enter a 10-digit phone number" required> <br> 
+          </div >
+           <label for="fathername">Father's Full Name</label><br>
+           <div class="form-group">
+           <img src="./assets/images/user-beard.png" alt="User">
+            <input id="fathername" type="text" name="fatherName" > <br>
+          </div >
+            <label for="fathercontact">Father's Phone Number</label><br>
+            <div class="form-group">
+            <img src="./assets/images/phone-call.png" alt="User">
+            <input type="tel" name="fatherContact" id="fathercontact" pattern="[0-9]{10}" maxlength="10" minlength="10" title="Enter a 10-digit phone number" required>
+           </div ><br>
+  
+        <button  type='submit' class="formbold-btn" >Submit</button>
+        </div>
+      </form>
+    </div>
+  </div>
+ <!-- Modal for toast messages -->
+ <div id="toastModal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <p id="toastMessage"></p>
+  </div>
+</div>
+<%- include("partials/_footer") %>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Dynamically populate year of admission dropdown
+    const yearSelect = document.getElementById('yearOfAdmission');
+    if (yearSelect) {
+      const currentYear = new Date().getFullYear();
+      yearSelect.innerHTML = '';
+      for (let y = currentYear - 2; y <= currentYear; y++) {
+        const opt = document.createElement('option');
+        opt.value = y;
+        opt.textContent = y;
+        yearSelect.appendChild(opt);
+      }
+    }
+    const form = document.getElementById('myForm');
+    const toastModal = document.getElementById('toastModal');
+    const toastMessage = document.getElementById('toastMessage');
+    const closeBtn = document.querySelector('.close');
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      // Collect all form data
+      const formData = new FormData(form);
+      const data = {};
+      formData.forEach((value, key) => {
+        data[key] = value;
+      });
+
+      try {
+        const response = await fetch('/students', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        });
+        const result = await response.json();
+
+        if (response.ok) {
+          showToast(result);
+          form.reset(); // Reset all fields on success
+        } else {
+          showToastError(result.error || result);
+        }
+      } catch (err) {
+        showToastError('Submission failed. Please try again.');
+      }
+    });
+
+    function showToast(message) {
+      toastModal.style.display = 'block';
+      toastMessage.textContent = typeof message === 'string' ? message : (message.message || 'Saved Successfully');
+      toastModal.style.backgroundColor = '';
+      closeBtn.onclick = function() {
+        toastModal.style.display = 'none';
+      }
+      setTimeout(() => {
+        toastModal.style.display = 'none';
+      }, 3000);
+    }
+
+    function showToastError(message) {
+      toastModal.style.backgroundColor = '#ffcccc';
+      showToast(message);
+    }
+  });
+</script>
+  

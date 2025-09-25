@@ -5,7 +5,7 @@ import axios from 'axios';
 function StudentCard({ student, onClick }) {
   return (
     <div className="student-card" onClick={() => onClick(student)}>
-      <h3>{student.firstName.toUpperCase()} {student.surname.toUpperCase()}</h3>
+      <h3>{student.firstName} {student.surname}</h3>
       <p>{student.programme}</p>
     </div>
   );
@@ -23,21 +23,20 @@ export default function AdminDashboard() {
   const debounceRef = useRef();
   const chartRef = useRef();
 
-
-
-
   // Fetch students on any filter or page change
   useEffect(() => {
     fetchStudents();
   }, [filters, page]);
 
-
   async function fetchStudents() {
-    const res = await axios.get('/api/students', { params: { ...filters, page } });
+    // Only send non-empty filters
+    const params = { page };
+    if (filters.year) params.year = filters.year;
+    if (filters.programme) params.programme = filters.programme;
+    const res = await axios.get('/api/students', { params });
     setStudents(res.data.students);
     setTotalPages(res.data.totalPages);
   }
-
 
   // Fetch summary/chart only when year filter changes
   useEffect(() => {
@@ -79,28 +78,70 @@ export default function AdminDashboard() {
           label: 'Students by Programme',
           data: Object.values(summary),
           backgroundColor: [
-            '#007bff', '#28a745', '#ffc107', '#dc3545', '#6f42c1'
-          ]
+            '#4e79a7', '#f28e2b', '#e15759', '#76b7b2', '#59a14f'
+          ],
+          borderRadius: 6,
+          borderSkipped: false,
         }]
       },
       options: {
         responsive: true,
         plugins: {
           legend: { display: false },
-          title: { display: true, text: 'Students by Programme' }
+          title: { display: true, text: 'Students by Programme', font: { size: 18 } },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return `${context.label}: ${context.parsed.y}`;
+              }
+            }
+          },
+          datalabels: {
+            anchor: 'end',
+            align: 'top',
+            color: '#333',
+            font: { weight: 'bold', size: 14 },
+            formatter: function(value) { return value; }
+          }
         },
         scales: {
+          x: {
+            grid: { display: false },
+            ticks: { font: { size: 14 } }
+          },
           y: {
             beginAtZero: true,
+            grid: { color: '#eee' },
             ticks: {
               stepSize: 1,
+              font: { size: 14 },
               callback: function(value) {
                 return Number.isInteger(value) ? value : '';
               }
             }
           }
         }
-      }
+      },
+      plugins: [
+        {
+          id: 'valueLabels',
+          afterDatasetsDraw: chart => {
+            const { ctx } = chart;
+            chart.data.datasets.forEach((dataset, i) => {
+              const meta = chart.getDatasetMeta(i);
+              meta.data.forEach((bar, idx) => {
+                const value = dataset.data[idx];
+                ctx.save();
+                ctx.font = 'bold 14px sans-serif';
+                ctx.fillStyle = '#333';
+                ctx.textAlign = 'center';
+                ctx.fillText(value, bar.x, bar.y - 8);
+                ctx.restore();
+              });
+            });
+          }
+        }
+      ]
     });
     // Cleanup chart on unmount
     return () => {
@@ -133,7 +174,7 @@ export default function AdminDashboard() {
         </select>
         <select onChange={e => setFilters(f => ({ ...f, programme: e.target.value }))}>
           <option value="">All Programmes</option>
-          {['Science', 'General Arts', 'Visual Arts', 'Business', 'Home Economics'].map(p => <option key={p} value={p}>{p}</option>)}
+          {['General Science', 'General Arts', 'Visual Arts', 'Business', 'Home Economics'].map(p => <option key={p} value={p}>{p}</option>)}
         </select>
       </div>
       <div className="student-list">
